@@ -1,15 +1,16 @@
-
 /*global chrome*/
 var labelsResult = [] //从label cloud⻚⾯收到的需要抓取的⻚⾯列表
 var currentLabelGroup = '';  //当前数据所属项⽬名字，如Binance 
 var index = 0; //当前打开的⻚⾯索引，当到达max时完成 
 var typeIndex = 0; //每个项⽬有3个可能的类型标签，要遍历⼀下，这是索引，到达3时结束
-var types = ['1', '3-0', '2']; //每个项⽬有3个可能的类型，分别对应Main, Others, Legacy 
+var types = ['1', '3-0', '2']; //每个项⽬有3个可能的类型，分别对应Main, Others, Legacy (例如Augur)
 var typeMax = types.length; //类型标签遍历的最⼤值 
 var max = 0;//整个标签地址的最⼤值 
 var timeInterval = 1000;
 var labelsData = [] //最终输出的数据
-var addressPool = [] //防地址重复的数组记录 
+var addressPool = [] //防地址重复的数组记录
+var newLabelsData = []
+let lastData = []
 
 chrome.browserAction.onClicked.addListener(function (tab) {
    // Send a message to the active tab
@@ -19,12 +20,14 @@ chrome.browserAction.onClicked.addListener(function (tab) {
    });
 });
 
+// 侦听从⻚⾯发来的消息和数据
 chrome.runtime.onMessage.addListener(
    function (request, sender, sendResponse) {
       console.log(sender.tab ? "from a content script:" + sender.tab.url : "from the extension");
       //点击【开始抓取】的时候，App.js传来的总的要抓取的⻚⾯列表，并将相关数据进⾏重置
       if (request.type === "startScan") {
          labelsResult = request.data;
+         lastData = request.data2
          // console.log("labelsResult", labelsResult);
          max = labelsResult.length;
          index = 0;
@@ -41,16 +44,26 @@ chrome.runtime.onMessage.addListener(
             item.group = currentLabelGroup;
             return item;
          })
+         // 将数据汇总到labelsData，同时防地址重复
+         // console.log("request.data", request.data, request.data[0].group);
          for (let i = 0; i < request.data.length; i++) {
             let r = request.data[i];
             if (addressPool.indexOf(r.address) === -1) {
+               console.log("...", r);
                labelsData.push(r);
+               let flag = true //假设不存在
+               lastData.forEach(item => {
+                  if (item.address === r.address) flag = false
+               });
+               if (flag) newLabelsData.push(r)
             }
          }
          // 记录已经抓到的地址，防重复
          let addresses = request.data.map(item => item.address);
+         console.log("addresses", addresses);
          addressPool = addressPool.concat(addresses);
-         console.log("labelsData", labelsData)
+         // console.log("addressPool", addressPool);
+         // console.log("labelsData", labelsData)
          sendResponse({ labelsData: labelsData });
          return true;
       }
@@ -78,10 +91,12 @@ function scan() { // 以下逻辑⽤于拼接要打开的标签地址
          index++;
          console.log("index and max", index, max);
          // 整个列表的⻚⾯循环
-         if (index >= max) {
+         // if (index >= max) {
+         if (index >= 6) {
             alert("Over, total records: " + labelsData.length);
             index = 0;
             typeIndex = 0;
+            console.log(labelsData, newLabelsData);
             downloadFile(JSON.stringify(labelsData));
          } else {
             scan();

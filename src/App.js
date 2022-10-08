@@ -3,6 +3,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import lastData from "./data.json"
 
 class App extends Component {
 
@@ -15,7 +16,7 @@ class App extends Component {
     console.log(result1);
     // 这里抓取https://etherscan.io/labelcloud⻚⾯所有的⼤类标签
     // 然后通过chrome.runtime.sendMessage发送数据到background.js中
-    chrome.runtime.sendMessage({ type: "startScan", data: result1 }, function (response) {
+    chrome.runtime.sendMessage({ type: "startScan", data: result1, data2: lastData }, function (response) {
       console.log("startScan data", response.farewell);
     });
   }
