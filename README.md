@@ -1,77 +1,12 @@
-# React Chrome Extension
-A chrome extension boilerplate project with ReactJs using inject page strategy. 
+## 问题记录
 
-Stop worrying about the configurational challenges to set up the chrome extension, just start writing your components as usual. Read [detailed blog](https://medium.com/@satendra02/create-chrome-extension-with-reactjs-using-inject-page-strategy-137650de1f39)
+### chrome.extension.getBackgroundPage
 
->This project is sponsered By [Recast Studio](https://recast.studio)
+为了解决插件 V3 中 background script 中无法获取到 window 对象,使用 getBackgroundPage 来获取, 但是执行却报出 `background.js:1 Uncaught TypeError: chrome.extension.getBackgroundPage is not a function` 的错误
+发现是是因为 background（V3 叫做 service worker）加载不出导致的
+V2 中有一个 persistent 属性, 如果设置为 true 会始终后台运行, 相当于一个独立的服务器页面, 而如果是 false 则会让 background 变成了一种短暂加载进内存的脚本, 脚本可以多次被线程加载执行, 执行完毕后就释放, 可以降低谷歌浏览器的内存耗费(事实上这么点内存耗费并不是那么重要所以大多数情况下无脑设置 persistent:true)
+在 V3 中，chrome extensions 砍掉了 background, 直接改为了 persistent 始终为 false 的 service worker，也就是说, 新的 background 会不断的卸载重装卸载重装
 
+> -   关于对 Service Worker 的讨论: https://stackoverflow.com/questions/66618136/persistent-service-worker-in-chrome-extension/66618269#66618269
 
-The boilerplate is to quickly create a chrome extension using ReactJs, The motivation behind creating a boilerplate was:
-1. Instead of chrome's ready-made popup, We wanted our own page injected into DOM as a sidebar for better UX.
-
-2. We wanted to use ReactJs for the Component-based approach, Routing, and its build mechanism.
-
-3. We need to make sure that the extension CSS should not conflict with the host page styles in any case.
-
-
-## Features
-
-- Used ReactJs to write chrome extension
-- Injecting extension to host page as content script
-- Utilized the Chrome messaging API
-- Isolated extension CSS using Iframe
-
-## Installation
->Make sure you have latest **NodeJs** version installed
-
-Clone repo
-
-```
-git clone https://github.com/satendra02/react-chrome-extension.git
-```
-Go to `react-chrome-extension` directory run
-
-```
-yarn install
-```
-Now build the extension using
-```
-yarn build
-```
-You will see a `build` folder generated inside `[PROJECT_HOME]`
-
-To avoid running `yarn build` after updating any file, you can run
-
-```
-yarn watch
-```
-
-which listens to any local file changes, and rebuilds automatically.
-
-## Adding React app extension to Chrome
-
-In Chrome browser, go to chrome://extensions page and switch on developer mode. This enables the ability to locally install a Chrome extension.
-
-<img src="https://cdn-images-1.medium.com/max/1600/1*OaygCwLSwLakyTqCADbmDw.png" />
-
-Now click on the `LOAD UNPACKED` and browse to `[PROJECT_HOME]\build` ,This will install the React app as a Chrome extension.
-
-When you go to any website and click on extension icon, injected page will toggle.
-
-<img src="https://cdn-images-1.medium.com/max/1600/1*bXJYfvrcHDWKwUZCrPI-8w.png" />
-
-## Using SASS
-
-Boilerplate contains [sass-loader](https://github.com/webpack-contrib/sass-loader), so you can use SASS instead of pure CSS in your project. To do so:
-1. Rename ```src/App.css``` file to ```src/App.scss``` 
-2. Change import line in ```src/app.js``` from 
- ```import './App.css';```  to ```import './App.scss';```
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/satendra02/react-chrome-extension/. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
-
-
-## License
-
-The repo is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+-   官方对于 Service Worker 的转移 https://developer.chrome.com/docs/extensions/mv3/migrating_to_service_workers/

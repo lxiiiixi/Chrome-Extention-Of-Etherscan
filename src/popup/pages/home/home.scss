@@ -1,0 +1,41 @@
+.home {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    // background: linear-gradient(#8cc7f4, #8daef4);
+    background-color: rgb(206, 206, 206);
+    text-align: center;
+
+    .btn-wrap {
+        margin-bottom: 26px;
+
+        .niceButton {
+            display: inline-block;
+            padding: 12px 22px;
+            width: 80%;
+            margin: 10px auto;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            outline: none;
+            color: #fff;
+            background-color: rgb(16, 185, 214);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 3px #999;
+        }
+        .niceButton:hover {
+            background-color: #1795bb;
+        }
+        .niceButton:active {
+            background-color: #1795bb;
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+    }
+}

@@ -1,34 +1,49 @@
 {
-  "short_name": "My Extension",
-  "name": "My Extension",
-  "version": "1.1",
-  "manifest_version": 2,
+  "name": "Chrome Extention V3",
+  "version": "1.0",
+  "description": "A Chrome Extention V3 Frame by React",
+  "manifest_version": 3,
   "background": {
-    "scripts": [
-      "app/background.js"
-    ]
+    "service_worker": "static/js/background.js"
   },
-  "browser_action": {},
   "content_scripts": [
     {
       "matches": [
         "<all_urls>"
       ],
       "css": [
-        "/css/root.css"
+        "static/css/content.css"
       ],
       "js": [
-        "/static/js/content.js"
+        "static/js/content.js"
       ]
     }
   ],
-  "web_accessible_resources": [
-    "/static/css/content.css",
-    "/static/media/*"
-  ],
-  "content_security_policy": "script-src 'self' 'sha256-GgRxrVOKNdB4LrRsVPDSbzvfdV4UqglmviH9GoBJ5jk='; object-src 'self'",
   "permissions": [
+    "storage",
+    "declarativeContent",
     "tabs",
     "downloads"
-  ]
+  ],
+  "host_permissions": [],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "/images/app.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "/images/app.png",
+      "32": "/images/app.png",
+      "48": "/images/app.png",
+      "128": "/images/app.png"
+    },
+    "default_title": "React CRX MV3"
+  }
 }

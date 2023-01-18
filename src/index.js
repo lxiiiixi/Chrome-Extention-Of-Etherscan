@@ -1,7 +1,16 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
-import registerServiceWorker from './registerServiceWorker';
+import { createRoot } from "react-dom/client"
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/es/locale/zh_CN'
+import Popup from '@/popup'
+// 引入自定义全局公用样式
+import '@/common/styles/frame.scss'
 
-ReactDOM.render(<App isExt={false}/>, document.getElementById('root'));
-registerServiceWorker();
+const antdConfig = {
+  locale: zhCN,
+}
+
+let app = createRoot(document.getElementById("root"));
+app.render(<ConfigProvider {...antdConfig}>
+  <Popup />
+</ConfigProvider>)
