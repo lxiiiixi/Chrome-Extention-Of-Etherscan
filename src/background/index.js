@@ -48,7 +48,14 @@ chrome.runtime.onMessage.addListener(
 );
 
 
-const types = ['1', '0', '3-0', '2']; //每个项⽬有3个可能的类型，分别对应Main, Others,Others, Legacy (例如Augur)
+const types = ['1', '0', '3-0', '2'];
+/**
+ * 每个项⽬有3个可能的类型
+ * 分别对应 
+ * 1=Main, 3-0=Others, 2=Legacy (例如Augur)
+ * celer-network 的Others为0 https://etherscan.io/accounts/label/celer-network?subcatid=0&size=25&start=0&col=1&order=asc
+ * fortube 的Others为3
+ */
 const typeMax = types.length; //类型标签遍历的最⼤值 
 let index = 0; // 当前打开的⻚⾯索引，当到达max时完成 
 let typeIndex = 0 // 每个打开的url都有四个可能的标签
@@ -70,10 +77,17 @@ const scan = (urls) => {
 
     console.log("scan执行");
     let url = `${urls[index]}?subcatid=${type}&size=2000&start=0&col=1&order=asc`
+
+    // 每个标签account打开第一个时候就可以在content中检查并获取到有几个tab
+    if (index === 0) {
+
+    }
+
+
     chrome.tabs.create({ url: url })
     console.log("新打开的tab type为:", type, "打开的url为:", url);
     typeIndex++; // 为下一次打开新的作准备
-    let time = 3000 + Math.round(Math.random() * 1000)
+    let time = 1000 + Math.round(Math.random() * 1000)
     setTimeout(function () {
         closeUrl(max, urls)
     }, time)
@@ -84,7 +98,7 @@ const scan = (urls) => {
 
 const closeUrl = (max, urls) => {
     chrome.tabs.query({ url: "https://*/accounts/label/*" }, function (tabs) {
-        chrome.tabs.remove(tabs[0].id, function () { });
+        // chrome.tabs.remove(tabs[0].id, function () { });
     })
     console.log("typeIndex and typeMax", typeIndex, typeMax);
     // ⼀个项⽬⻚⾯的⼏个type⻚⾯循环 (这里如果是本页面没有的type 会默认跳到默认打开的第一个页面 获取到的地址会在addressPool中判断重复则不会添加)
@@ -94,16 +108,14 @@ const closeUrl = (max, urls) => {
         index++;
         console.log("此时标签index:", index, "所有地址最大index:", max - 1);
         // if (index >= max) {
-        if (index >= 1) {
+        if (index >= 3) {
             // 整个列表的⻚⾯循环结束 现在V3版本中无法获取到Windows对象 所以我发送到popup页面中执行下载操作
             index = 0;
             console.log("Over,发送数据到popup");
-            console.log(window);
-            var backgroundPage = chrome.extension.getBackgroundPage();
-            backgroundPage.alert("Over")
 
-            // const filename = `${chainInfo.chainName}-${chainInfo.time}.json`
-            // chrome.runtime.sendMessage({ type: "finish", labelsData, filename });
+
+            const filename = `${chainInfo.chainName}-${chainInfo.time}.json`
+            downloadFile(labelsData, filename)
 
             // 当前的问题是现在background无法获取windows对象 发送消息给content/popup页面也无法收到消息
 
@@ -117,7 +129,16 @@ const closeUrl = (max, urls) => {
     }
 }
 
-
+// 文件下载方法
+function downloadFile(content, filename) {
+    const blob = new Blob([content], { type: "text/json;charset=UTF-8" });
+    var url = window.URL.createObjectURL(blob);
+    console.log(window);
+    chrome.downloads.download({
+        url: url,
+        filename: filename,
+    })
+}
 
 
 // manifest.json的Permissions配置需添加 declarativeContent 权限

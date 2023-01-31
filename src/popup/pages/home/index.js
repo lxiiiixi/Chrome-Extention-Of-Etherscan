@@ -2,25 +2,6 @@
 import { switchDate } from '../../../utils/util';
 import './home.scss'
 
-chrome.runtime.onMessage.addListener(
-    function (request, sender, sendResponse) {
-        if (request.type === "finish") {
-            window.alert("Finish");
-            // 下载
-            downloadFile(JSON.stringify(request.labelsData), request.filename);
-        }
-    });
-
-// 文件下载方法
-function downloadFile(content, filename) {
-    var blob = new Blob([content], { type: "text/json;charset=UTF-8" });
-    var url = window.URL.createObjectURL(blob);
-    chrome.downloads.download({
-        url: url,
-        filename: filename
-    })
-}
-
 function Home() {
     // 设置路由钩子
 
@@ -30,15 +11,11 @@ function Home() {
             time: switchDate(new Date()),
         }
 
-        let saveKey = ""
         if (chainWebsite === "etherscan") {
-            saveKey = "etherscan-lableNums"
             chainInfo.chainName = "etherscan"
         } else if (chainWebsite === "bscscan") {
-            saveKey = "bscscan-lableNums"
             chainInfo.chainName = "bscscan"
         } else if (chainWebsite === "polygon") {
-            saveKey = "polygon-lableNums"
             chainInfo.chainName = "polygon"
         }
         console.log("+++++++key", chainInfo);

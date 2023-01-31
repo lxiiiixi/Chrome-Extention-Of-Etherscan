@@ -1,7 +1,7 @@
 {
-  "name": "Chrome Extention V3",
+  "name": "Get Addresses",
   "version": "1.0",
-  "description": "A Chrome Extention V3 Frame by React",
+  "description": "Get specially marked addresses",
   "manifest_version": 3,
   "background": {
     "service_worker": "static/js/background.js"

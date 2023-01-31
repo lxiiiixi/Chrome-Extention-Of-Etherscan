@@ -1,6 +1,6 @@
 /*global chrome*/
 import { createRoot } from "react-dom/client"
-import { getAllLableAccount } from "../utils/contentScript"
+import { getAllLabelAccount } from "../utils/contentScript"
 import "./content.scss"
 
 console.log("content script 执行");
@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
         if (request.type === "getUrls") {
             chainInfo = request.chainInfo
-            const openUrls = getAllLableAccount()
+            const openUrls = getAllLabelAccount()
             // 将需要打开的url发送给background
             chrome.runtime.sendMessage({ type: "startScan", openUrls, chainInfo });
         }
@@ -29,7 +29,7 @@ if (locationHref.indexOf('/accounts/label') > -1) {
     let labels = Array.from(document.querySelectorAll(labelQuery))
     let url = document.querySelector(urlQuery) || {};
     let addressResult = [];
-    const lableName = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
+    const labelName = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
     for (let i = 0; i < addresses.length; i++) {
         // 只选出 Name Tag下面有内容的
         if (labels[i].textContent) {
@@ -38,15 +38,17 @@ if (locationHref.indexOf('/accounts/label') > -1) {
                 address: addresses[i].textContent,
                 nameTag: labels[i].textContent,
                 url: url.href ? url.href : "",
-                lableName
+                labelName
             })
         }
     }
     console.log(addressResult);
     //解析完毕，发送到background⾥去 
-    chrome.runtime.sendMessage({ type: "parseLabels", lableName, addressResult }, function (response) {
-        // console.log("本页面获取到的地址数据:", response.currentLabelData);
-    });
+    chrome.runtime.sendMessage({
+        type: "parseLabels",
+        labelName,
+        addressResult
+    }, function (response) { });
 }
 
 
