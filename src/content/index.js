@@ -21,13 +21,13 @@ chrome.runtime.onMessage.addListener(
 );
 
 if (locationHref.indexOf('/accounts/label') > -1) {
-    let addressQuery = 'tbody td a'
+    const addressQuery = 'tbody td a'
     // let labelQuery = 'tbody td.sorting_1'
-    let labelQuery = 'tbody td:nth-child(2)'
-    let urlQuery = 'div.card.mb-3 div.card-body span a'
-    let addresses = Array.from(document.querySelectorAll(addressQuery));
-    let labels = Array.from(document.querySelectorAll(labelQuery))
-    let url = document.querySelector(urlQuery) || {};
+    const labelQuery = 'tbody td:nth-child(2)'
+    const urlQuery = 'div.card.mb-3 div.card-body span a'
+    const addresses = Array.from(document.querySelectorAll(addressQuery));
+    const labels = Array.from(document.querySelectorAll(labelQuery))
+    const url = document.querySelector(urlQuery) || {};
     let addressResult = [];
     const labelName = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
     for (let i = 0; i < addresses.length; i++) {
@@ -43,12 +43,27 @@ if (locationHref.indexOf('/accounts/label') > -1) {
         }
     }
     console.log(addressResult);
+
     //解析完毕，发送到background⾥去 
-    chrome.runtime.sendMessage({
-        type: "parseLabels",
-        labelName,
-        addressResult
-    }, function (response) { });
+    if (locationHref.indexOf('?subcatid=1') > -1) {
+        // 如果是这个标签第一个打开 => 获取到 tabs
+
+        const tabsQuery = "ul.nav.nav-custom.nav-borderless.nav_tabs li a"
+        const tabs = Array.from(document.querySelectorAll(tabsQuery))
+        const tabsList = tabs.map(a => a.getAttribute("val"))
+
+        chrome.runtime.sendMessage({
+            type: "parseLabelsMain",
+            addressResult,
+            tabsList
+        }, function (response) { });
+    } else {
+        chrome.runtime.sendMessage({
+            type: "parseLabelsOthers",
+            addressResult
+        }, function (response) { });
+    }
+
 }
 
 

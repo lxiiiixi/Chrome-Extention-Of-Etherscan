@@ -12,14 +12,13 @@ function Home() {
         }
 
         if (chainWebsite === "etherscan") {
-            chainInfo.chainName = "etherscan"
+            chainInfo.chainName = "Etherscan"
         } else if (chainWebsite === "bscscan") {
-            chainInfo.chainName = "bscscan"
+            chainInfo.chainName = "Bscscan"
         } else if (chainWebsite === "polygon") {
-            chainInfo.chainName = "polygon"
+            chainInfo.chainName = "Polygon"
         }
         console.log("+++++++key", chainInfo);
-
 
         // popup => content
         // 这里更好的是实现点击按钮后打开新的目标页面 但是现在这样操作目标页无法获取到信息
@@ -30,7 +29,6 @@ function Home() {
             var tabId = tabs[0].id;
             chrome.tabs.sendMessage(tabId, { type: "getUrls", chainInfo });
         });
-
 
 
         // --------
