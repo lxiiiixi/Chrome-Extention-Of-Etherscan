@@ -2,6 +2,8 @@
 let addressPool = [] // 防地址重复的数组记录(包含所有获取过的地址)
 let labelsData = [] // 最终结果
 let chainInfo = {}
+let openUrls = []
+let openedUrl = [] // 被打开过的url
 
 // const types = ['1', '0', '3-0', '2'];
 let types = ['1'];
@@ -15,6 +17,7 @@ let types = ['1'];
 let typeMax = types.length; //类型标签遍历的最⼤值 
 let index = 0; // 当前打开的⻚⾯索引，当到达max时完成 
 let typeIndex = 0 // 每个打开的url都有四个可能的标签
+let closeTime = 3000
 
 // 侦听从⻚⾯发来的消息和数据
 chrome.runtime.onMessage.addListener(
@@ -22,16 +25,15 @@ chrome.runtime.onMessage.addListener(
         console.log(sender.tab ? "from a content script:" + sender.tab.url : "from the extension");
         // bug:这里收到两次 所以以下内容都执行了两次
 
-        // 接受到的请求来自content script
+        // 接受到的请求来自content script 只会在点击按钮后执行一次
         if (request.type === "startScan") {
-            const openUrls = request.openUrls
+            openUrls = request.openUrls
             chainInfo = request.chainInfo
             console.log("background 收到来自content的请求", openUrls);
-
             console.log("检验数据是否初始化", addressPool, labelsData);
-
-            scan(openUrls)
+            scan()
         } else if (request.type === "parseLabelsMain") {
+            // 还有一个问题：如果type为1时的没有被打开，数据没有请求过来，那么整个属性下面的所有tab下的数据都不会被拿到
             if (request.tabsList.length) {
                 types = request.tabsList
                 typeMax = types.length
@@ -39,9 +41,12 @@ chrome.runtime.onMessage.addListener(
                 types = ['1'];
             }
             saveAddress()
+            openedUrl.push(request.href)
         } else if (request.type === "parseLabelsOthers") {
             saveAddress()
+            openedUrl.push(request.href)
         }
+
 
         function saveAddress() {
             // 当打开诸如https://etherscan.io/accounts/label/binance⻚⾯时
@@ -57,7 +62,7 @@ chrome.runtime.onMessage.addListener(
                 // console.log("检测addressPool中是否有这个地址", addressPool, r.address, addressPool.indexOf(r.address));
                 if (addressPool.indexOf(r.address) === -1) { // 如果addressPool中没有这个地址才会更新到结果中
                     // 为什么这么addressPool中有的地址还是会执行到这一步
-                    console.log("labelsData+", r);
+                    // console.log("labelsData+", r);
                     currentLabelData.push(r)
                 }
             }
@@ -79,10 +84,11 @@ chrome.runtime.onMessage.addListener(
 
 /**
  * 开始打开url
- * 参数:需要打开的url
  */
-const scan = (urls) => {
+const scan = () => {
     const type = types[typeIndex]; // 记录每次打开的 type 用于作为本属性所有标签便打开结束的临界点
+    let time = closeTime + Math.round(Math.random() * 1000)
+
 
     // let currentLabelGroup = '';  // 此时所打开地址的属性的名称
     // currentLabelGroup = urls[index].lastIndexOf("/");
@@ -90,21 +96,20 @@ const scan = (urls) => {
     // console.log("currentLabelGroup此时打开页面的标签", currentLabelGroup);
 
     // console.log("scan执行");
-    let url = `${urls[index]}?subcatid=${type}&size=2000&start=0&col=1&order=asc`
+    let url = `${openUrls[index]}?subcatid=${type}&size=2000&start=0&col=1&order=asc`
     chrome.tabs.create({ url: url })
     console.log("新打开的tab type为:", type, "打开的url为:", url);
-    typeIndex++; // 为下一次打开新的作准备
-    let time = 3000 + Math.round(Math.random() * 1000)
-    setTimeout(function () {
-        closeUrl(urls)
-    }, time)
 
+    typeIndex++; // 为下一次打开新的作准备
+    if (index !== 0 && !(index % 50)) closeTime += 1000
+    setTimeout(function () {
+        closeUrl()
+    }, time)
 }
 
 // 后续可以思考的优化:有些标签中是没有4个types的,是不是可以先判断出来再根据现有的去决定当前的标签打开几个页面,可以减少不必要的打开次数
 
-const closeUrl = (urls) => {
-    const max = urls.length;// 整个标签地址的最⼤值 
+const closeUrl = () => {
 
     chrome.tabs.query({ url: "https://*/accounts/label/*" }, function (tabs) {
         chrome.tabs.remove(tabs[0].id, function () { });
@@ -116,31 +121,53 @@ const closeUrl = (urls) => {
         typeIndex = 0;
         types = ["1"]
         typeMax = types.length
+        // 打开后index指向下一个url
         index++;
-        console.log("此时标签index:", index, "所有地址最大index:", max - 1);
-        if (index >= max) {
-            // if (index >= 1) {
-            // 整个列表的⻚⾯循环结束 现在V3版本中无法获取到Windows对象 所以我发送到popup页面中执行下载操作
-            console.log("Over,发送数据到popup");
+        console.log("下一个将打开标签的index:", index);
 
 
-            const filename = `${chainInfo.chainName}-${chainInfo.time}.json`
-            downloadFile(labelsData, filename)
+        if (index >= openUrls.length) {
+            // if (index >= 10) {
 
-            // 还需要需要注意:当一个链上的数据下载完毕后需要把 labelsData 重新变为空数组 否则会影响新的链的数据获取
-            // 最好后续再检查一下如果被中断会不会影响下一次的获取:强制刷新之后数据会重新初始化的
-            // 下载后所有数据初始化：避免影响下一次下载
-            types = ['1'];
-            index = 0;
-            typeIndex = 0
-            addressPool = []
-            labelsData = []
-            chainInfo = {}
+            // 到这里之后原来的全都被打开完成了，但是还要筛选出没有成功获取到数据的地址，将地址放到urls中继续获取
+            // 从 openUrls 中筛选出 openedUrl 中没有的
+            const notOpendUrls = []
+            openUrls.forEach((item) => {
+                if (!openedUrl.includes(item)) {
+                    notOpendUrls.push(item)
+                }
+            })
+            console.log("已经获取到的url地址：", openedUrl, "未获取成功的url地址：", notOpendUrls);
+
+            if (!notOpendUrls.length) {
+                const filename = `${chainInfo.chainName}-${chainInfo.time}.json`
+                downloadFile(labelsData, filename)
+
+                // 还需要需要注意:当一个链上的数据下载完毕后需要把 labelsData 重新变为空数组 否则会影响新的链的数据获取
+                // 最好后续再检查一下如果被中断会不会影响下一次的获取:强制刷新之后数据会重新初始化的
+                // 下载后所有数据初始化：避免影响下一次下载
+                types = ['1'];
+                typeIndex = 0
+                addressPool = []
+                labelsData = []
+                index = 0;
+                chainInfo = {}
+            } else {
+                // 如果还有数据没有获取
+                console.log("再次次获取遗漏的数据", notOpendUrls);
+                types = ['1'];
+                typeIndex = 0
+                openUrls = notOpendUrls
+                index = 0;
+                openedUrl = []
+                closeTime += 5000 // 对特殊的网站延长等待时间
+                scan()
+            }
         } else {
-            scan(urls);
+            scan();
         }
     } else {
-        scan(urls)
+        scan()
     }
 }
 

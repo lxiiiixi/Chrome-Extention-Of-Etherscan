@@ -10,3 +10,8 @@ V2 中有一个 persistent 属性, 如果设置为 true 会始终后台运行, �
 > -   关于对 Service Worker 的讨论: https://stackoverflow.com/questions/66618136/persistent-service-worker-in-chrome-extension/66618269#66618269
 
 -   官方对于 Service Worker 的转移 https://developer.chrome.com/docs/extensions/mv3/migrating_to_service_workers/
+
+## 当前存在的可优化点
+
+1. 在最终下载之前对还未打开的 url 的判断效率或许可以提高，会耗费一点时间
+2. 网站有时就是会有不确定的原因导致增加获取时间多次也还是打不开，陷入死循环导致一直无法下载

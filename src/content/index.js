@@ -33,13 +33,20 @@ if (locationHref.indexOf('/accounts/label') > -1) {
     for (let i = 0; i < addresses.length; i++) {
         // 只选出 Name Tag下面有内容的
         if (labels[i].textContent) {
-            console.log("获取地址:", addresses[i], labels[i], url.href);
-            addressResult.push({
+            // console.log("获取地址:", addresses[i], labels[i], url.href);
+            const newAddress = {
                 address: addresses[i].textContent,
                 nameTag: labels[i].textContent,
                 url: url.href ? url.href : "",
                 labelName
-            })
+            }
+            try {
+                btoa(JSON.stringify(newAddress))
+                addressResult.push(newAddress)
+            } catch {
+                console.log("发现含有 Latin1 以外的地址 丢弃:", newAddress);
+            }
+
         }
     }
     console.log(addressResult);
@@ -55,12 +62,14 @@ if (locationHref.indexOf('/accounts/label') > -1) {
         chrome.runtime.sendMessage({
             type: "parseLabelsMain",
             addressResult,
-            tabsList
+            tabsList,
+            href: locationHref.split("?")[0]
         }, function (response) { });
     } else {
         chrome.runtime.sendMessage({
             type: "parseLabelsOthers",
-            addressResult
+            addressResult,
+            href: locationHref.split("?")[0]
         }, function (response) { });
     }
 
