@@ -4,6 +4,7 @@ let labelsData = [] // 最终结果
 let chainInfo = {}
 let openUrls = []
 let openedUrl = [] // 被打开过的url
+let times = 0 // 记录完成后重新获取的次数（防止有异常地址时无限循环无法下载）
 
 // const types = ['1', '0', '3-0', '2'];
 let types = ['1'];
@@ -131,13 +132,17 @@ const closeUrl = () => {
 
             // 到这里之后原来的全都被打开完成了，但是还要筛选出没有成功获取到数据的地址，将地址放到urls中继续获取
             // 从 openUrls 中筛选出 openedUrl 中没有的
-            const notOpendUrls = []
+            let notOpendUrls = []
             openUrls.forEach((item) => {
                 if (!openedUrl.includes(item)) {
                     notOpendUrls.push(item)
                 }
             })
             console.log("已经获取到的url地址：", openedUrl, "未获取成功的url地址：", notOpendUrls);
+            if (times >= 10) {
+                notOpendUrls = []
+                console.log("times:", times, "直接下载");
+            }
 
             if (!notOpendUrls.length) {
                 const filename = `${chainInfo.chainName}-${chainInfo.time}.json`
@@ -152,9 +157,12 @@ const closeUrl = () => {
                 labelsData = []
                 index = 0;
                 chainInfo = {}
+                closeTime = 3000
             } else {
                 // 如果还有数据没有获取
                 console.log("再次次获取遗漏的数据", notOpendUrls);
+                times++
+
                 types = ['1'];
                 typeIndex = 0
                 openUrls = notOpendUrls

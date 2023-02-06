@@ -29,7 +29,7 @@ if (locationHref.indexOf('/accounts/label') > -1) {
     const labels = Array.from(document.querySelectorAll(labelQuery))
     const url = document.querySelector(urlQuery) || {};
     let addressResult = [];
-    const labelName = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
+    const group = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
     for (let i = 0; i < addresses.length; i++) {
         // 只选出 Name Tag下面有内容的
         if (labels[i].textContent) {
@@ -38,7 +38,8 @@ if (locationHref.indexOf('/accounts/label') > -1) {
                 address: addresses[i].textContent,
                 nameTag: labels[i].textContent,
                 url: url.href ? url.href : "",
-                labelName
+                group,
+                type: "Accounts"
             }
             try {
                 btoa(JSON.stringify(newAddress))
