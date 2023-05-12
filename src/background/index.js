@@ -18,7 +18,7 @@ let types = ['1'];
 let typeMax = types.length; //类型标签遍历的最⼤值 
 let index = 0; // 当前打开的⻚⾯索引，当到达max时完成 
 let typeIndex = 0 // 每个打开的url都有四个可能的标签
-let closeTime = 3000
+let closeTime = 8000
 
 // 侦听从⻚⾯发来的消息和数据
 chrome.runtime.onMessage.addListener(
@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener(
             console.log("检验数据是否初始化", addressPool, labelsData);
             scan()
         } else if (request.type === "parseLabelsMain") {
+            closeTime = 3000 // 第一个标签下的数据请求完毕后，将关闭时间改为3秒，为了通过验证
             // 还有一个问题：如果type为1时的没有被打开，数据没有请求过来，那么整个属性下面的所有tab下的数据都不会被拿到
             if (request.tabsList.length) {
                 types = request.tabsList
@@ -47,7 +48,6 @@ chrome.runtime.onMessage.addListener(
             saveAddress()
             openedUrl.push(request.href)
         }
-
 
         function saveAddress() {
             // 当打开诸如https://etherscan.io/accounts/label/binance⻚⾯时
@@ -98,6 +98,10 @@ const scan = () => {
 
     // console.log("scan执行");
     let url = `${openUrls[index]}?subcatid=${type}&size=2000&start=0&col=1&order=asc`
+    if (chainInfo.queryType === 'tokens') {
+        // 目前发现 token 是没有 tab 之分的
+        url = `${openUrls[index]}?subcatid=0&size=100&start=0&col=3&order=asc`
+    }
     chrome.tabs.create({ url: url })
     console.log("新打开的tab type为:", type, "打开的url为:", url);
 
@@ -113,7 +117,7 @@ const scan = () => {
 const closeUrl = () => {
 
     chrome.tabs.query({ url: "https://*/accounts/label/*" }, function (tabs) {
-        chrome.tabs.remove(tabs[0].id, function () { });
+        // chrome.tabs.remove(tabs[0].id, function () { });
     })
     console.log("typeIndex and typeMax", typeIndex, typeMax);
     // ⼀个项⽬⻚⾯的⼏个type⻚⾯循环 (这里如果是本页面没有的type 会默认跳到默认打开的第一个页面 获取到的地址会在addressPool中判断重复则不会添加)
@@ -126,9 +130,8 @@ const closeUrl = () => {
         index++;
         console.log("下一个将打开标签的index:", index);
 
-
         if (index >= openUrls.length) {
-            // if (index >= 10) {
+            // if (index >= 3) {
 
             // 到这里之后原来的全都被打开完成了，但是还要筛选出没有成功获取到数据的地址，将地址放到urls中继续获取
             // 从 openUrls 中筛选出 openedUrl 中没有的
@@ -158,6 +161,7 @@ const closeUrl = () => {
                 index = 0;
                 chainInfo = {}
                 closeTime = 3000
+                times = 0
             } else {
                 // 如果还有数据没有获取
                 console.log("再次次获取遗漏的数据", notOpendUrls);

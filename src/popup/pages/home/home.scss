@@ -9,9 +9,15 @@
     // background: linear-gradient(#8cc7f4, #8daef4);
     background-color: rgb(206, 206, 206);
     text-align: center;
+    padding: 0px 12px;
+
+    .wrap {
+        border: #1795bb 1px solid;
+        padding: 8px;
+    }
 
     .btn-wrap {
-        margin-bottom: 26px;
+        margin-bottom: 20px;
 
         .niceButton {
             display: inline-block;
