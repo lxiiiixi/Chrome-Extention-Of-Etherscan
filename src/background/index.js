@@ -6,19 +6,19 @@ let openUrls = []
 let openedUrl = [] // 被打开过的url
 let times = 0 // 记录完成后重新获取的次数（防止有异常地址时无限循环无法下载）
 
-// const types = ['1', '0', '3-0', '2'];
 let types = ['1'];
-/**
- * 每个项⽬有3个可能的类型
- * 分别对应 
- * 1=Main, 3-0=Others, 2=Legacy (例如Augur)
- * celer-network 的Others为0 https://etherscan.io/accounts/label/celer-network?subcatid=0&size=25&start=0&col=1&order=asc
- * fortube 的Others为3
- */
 let typeMax = types.length; //类型标签遍历的最⼤值 
 let index = 0; // 当前打开的⻚⾯索引，当到达max时完成 
 let typeIndex = 0 // 每个打开的url都有四个可能的标签
-let closeTime = 8000
+let closeTime = 3000
+
+const resetTypes = () => {
+    if (chainInfo.queryType === 'tokens') {
+        types = ['0']
+    } else {
+        types = ['1'];
+    }
+}
 
 // 侦听从⻚⾯发来的消息和数据
 chrome.runtime.onMessage.addListener(
@@ -30,17 +30,17 @@ chrome.runtime.onMessage.addListener(
         if (request.type === "startScan") {
             openUrls = request.openUrls
             chainInfo = request.chainInfo
+            resetTypes()
             console.log("background 收到来自content的请求", openUrls);
             console.log("检验数据是否初始化", addressPool, labelsData);
             scan()
         } else if (request.type === "parseLabelsMain") {
-            closeTime = 3000 // 第一个标签下的数据请求完毕后，将关闭时间改为3秒，为了通过验证
             // 还有一个问题：如果type为1时的没有被打开，数据没有请求过来，那么整个属性下面的所有tab下的数据都不会被拿到
             if (request.tabsList.length) {
                 types = request.tabsList
                 typeMax = types.length
             } else {
-                types = ['1'];
+                resetTypes()
             }
             saveAddress()
             openedUrl.push(request.href)
@@ -99,8 +99,9 @@ const scan = () => {
     // console.log("scan执行");
     let url = `${openUrls[index]}?subcatid=${type}&size=2000&start=0&col=1&order=asc`
     if (chainInfo.queryType === 'tokens') {
-        // 目前发现 token 是没有 tab 之分的
-        url = `${openUrls[index]}?subcatid=0&size=100&start=0&col=3&order=asc`
+        // 一个奇怪的现象：获取token的时候，总是会先打开 subcatid=1 然后变为 0，所以页面中可以获取到数据，但不会显示渲染数据 
+        // 对于 token 的获取，size > 100 会出错
+        url = `${openUrls[index]}?subcatid=${type}&size=100&start=0&col=3&order=asc`
     }
     chrome.tabs.create({ url: url })
     console.log("新打开的tab type为:", type, "打开的url为:", url);
@@ -116,15 +117,15 @@ const scan = () => {
 
 const closeUrl = () => {
 
-    chrome.tabs.query({ url: "https://*/accounts/label/*" }, function (tabs) {
-        // chrome.tabs.remove(tabs[0].id, function () { });
+    chrome.tabs.query({ url: "https://*/*/label/*" }, function (tabs) {
+        chrome.tabs.remove(tabs[0].id, function () { });
     })
     console.log("typeIndex and typeMax", typeIndex, typeMax);
     // ⼀个项⽬⻚⾯的⼏个type⻚⾯循环 (这里如果是本页面没有的type 会默认跳到默认打开的第一个页面 获取到的地址会在addressPool中判断重复则不会添加)
     if (typeIndex >= typeMax) {
         // 一个属性下几个tab标签的循环结束 开始打开新的属性
         typeIndex = 0;
-        types = ["1"]
+        resetTypes()
         typeMax = types.length
         // 打开后index指向下一个url
         index++;
@@ -154,7 +155,7 @@ const closeUrl = () => {
                 // 还需要需要注意:当一个链上的数据下载完毕后需要把 labelsData 重新变为空数组 否则会影响新的链的数据获取
                 // 最好后续再检查一下如果被中断会不会影响下一次的获取:强制刷新之后数据会重新初始化的
                 // 下载后所有数据初始化：避免影响下一次下载
-                types = ['1'];
+                resetTypes()
                 typeIndex = 0
                 addressPool = []
                 labelsData = []
@@ -167,7 +168,7 @@ const closeUrl = () => {
                 console.log("再次次获取遗漏的数据", notOpendUrls);
                 times++
 
-                types = ['1'];
+                resetTypes()
                 typeIndex = 0
                 openUrls = notOpendUrls
                 index = 0;

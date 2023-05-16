@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client"
 import { getAllLabel } from "../utils/getAllLabel"
 import excuteAccountContentScript from "../utils/accountsContentScript";
 import excuteTokenContentScript from "../utils/tokensContentScript";
+import "./content.scss"
 
 console.log("content script 执行");
 
-const locationHref = window.location.href
+// const locationHref = window.location.href
 
 // popup => content 
 chrome.runtime.onMessage.addListener(
@@ -20,9 +21,13 @@ chrome.runtime.onMessage.addListener(
     }
 );
 
+// 暂时应对 etherscan tokens 的获取脚本错误问题
+setTimeout(() => {
+    excuteTokenContentScript()
+}, 1000);
+
 excuteAccountContentScript()
 
-excuteTokenContentScript()
 
 
 // content页面的监听需要做两件事 一个是对所有标签的获取 一个是进入某一个打开的account页面之后对所有地址的获取

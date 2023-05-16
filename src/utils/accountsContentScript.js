@@ -8,15 +8,19 @@ export default function excuteAccountContentScript() {
 
         let addressQuery = 'tbody tr td:nth-child(1)' // bscscan poygonscan
         let labelQuery = 'tbody tr td:nth-child(2)' // bscscan poygonscan
+        let groupQuery = 'h1.h4.font-weight-normal.mb-0 span.small.text-secondary' // bscscan poygonscan
         if (website === "etherscan") {
             // addressQuery = 'tbody td a.js-clipboard.link-secondary'  // etherscan 这里获取的是地址旁边的复制按钮
             addressQuery = 'tbody tr td.d-flex.align-items-center'  // etherscan 
+            groupQuery = 'h1.h5.mb-0 span.small.text-muted'
         }
         const addresses = Array.from(document.querySelectorAll(addressQuery));
         // console.log(addresses, "addresses");
         const labels = Array.from(document.querySelectorAll(labelQuery))
         let addressResult = [];
-        const group = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
+        // const group = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
+        const group = document.querySelector(groupQuery).textContent.replace(/\n/g, '')
+
         let chain_id = 0
         switch (website) {
             case "etherscan":
@@ -38,7 +42,7 @@ export default function excuteAccountContentScript() {
                 // console.log("获取地址:", addresses[i], labels[i], url.href);
                 let newAddress = {
                     address: addresses[i].firstElementChild?.textContent,
-                    category: addresses[i].firstElementChild?.href ? "Address" : "Contract",
+                    category: addresses[i].firstElementChild?.href ? "EOA" : "Contract",
                     chain_id: chain_id,
                     label: labels[i].textContent,
                     group,
