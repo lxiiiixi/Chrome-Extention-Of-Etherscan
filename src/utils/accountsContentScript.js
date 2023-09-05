@@ -37,9 +37,9 @@ export default function excuteAccountContentScript() {
         }
 
         for (let i = 0; i < addresses.length; i++) {
-            // 只选出 Name Tag下面有内容的
+            // 只选出 Name Tag下面有内容的  
             if (!!labels[i]?.textContent) {
-                // console.log("获取地址:", addresses[i], labels[i], url.href);
+                console.log("获取地址:", addresses[i], labels[i]);
                 let newAddress = {
                     address: addresses[i].firstElementChild?.textContent,
                     category: addresses[i].firstElementChild?.href ? "EOA" : "Contract",
@@ -48,16 +48,26 @@ export default function excuteAccountContentScript() {
                     group,
                 }
                 if (website === "etherscan") {
+                    // addresses[i]: Array.from(document.querySelectorAll('tbody tr td.d-flex.align-items-center'))[0]
+                    let etherscanAddress = ""
+                    if (addresses[i].firstElementChild?.href) {
+                        etherscanAddress = addresses[i].lastElementChild?.dataset?.clipboardText
+                    } else {
+                        etherscanAddress = addresses[i].firstElementChild?.lastElementChild?.dataset?.clipboardText
+                    }
+
                     newAddress = {
                         ...newAddress,
-                        address: (addresses[i].firstElementChild?.href) ? addresses[i].lastElementChild.dataset.clipboardText : addresses[i].firstElementChild.lastElementChild.dataset.clipboardText,// etherscan
+                        address: etherscanAddress,// etherscan
                         // category: addresses[i].firstElementChild?.href ? "Address" : "Contract",
                     }
                 }
                 // console.log("newAddress", newAddress);
                 try {
                     btoa(JSON.stringify(newAddress))
-                    addressResult.push(newAddress)
+                    if (newAddress.address) {
+                        addressResult.push(newAddress)
+                    }
                 } catch {
                     console.log("发现含有 Latin1 以外的地址 丢弃:", newAddress);
                 }

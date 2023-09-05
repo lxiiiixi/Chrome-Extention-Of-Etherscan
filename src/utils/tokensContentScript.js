@@ -14,7 +14,7 @@ export default function excuteTokenContentScript() {
             groupQuery = 'span.text-muted.text-break'
         }
         const addresses = Array.from(document.querySelectorAll(addressQuery));
-        console.log(addresses, "addresses");
+        // console.log(addresses, "addresses");
         const labels = Array.from(document.querySelectorAll(labelQuery))
         let addressResult = [];
         // const group = locationHref.slice(locationHref.lastIndexOf("/") + 1, locationHref.lastIndexOf("?"))
@@ -42,7 +42,7 @@ export default function excuteTokenContentScript() {
                     address: addresses[i].textContent,
                     category: "Token",
                     chain_id: chain_id,
-                    label: labels[i].textContent.trim(),
+                    label: labels[i].textContent.trim(), // label 应该是一个字符串数组，只不过这里只有一个，下次获取之前确认一下
                     group,
                 }
                 if (website === "etherscan") {
